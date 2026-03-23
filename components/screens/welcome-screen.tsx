@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Camera, Sparkles } from "lucide-react";
+import { Scan } from "lucide-react";
+import Image from "next/image";
 
 interface WelcomeScreenProps {
   onNext: () => void;
@@ -9,33 +10,57 @@ interface WelcomeScreenProps {
 
 export function WelcomeScreen({ onNext }: WelcomeScreenProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
-      <div className="flex max-w-md flex-col items-center text-center">
-        {/* Logo/Icon */}
-        <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-          <Sparkles className="h-10 w-10 text-primary" />
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden">
+      {/* Camera Background */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/camera-placeholder.jpg"
+          alt="Camera view"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Camera overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+      </div>
+
+      {/* Camera Frame Corners */}
+      <div className="absolute inset-8 pointer-events-none">
+        <div className="absolute left-0 top-0 h-12 w-12 border-l-4 border-t-4 border-white/80 rounded-tl-xl" />
+        <div className="absolute right-0 top-0 h-12 w-12 border-r-4 border-t-4 border-white/80 rounded-tr-xl" />
+        <div className="absolute bottom-0 left-0 h-12 w-12 border-b-4 border-l-4 border-white/80 rounded-bl-xl" />
+        <div className="absolute bottom-0 right-0 h-12 w-12 border-b-4 border-r-4 border-white/80 rounded-br-xl" />
+      </div>
+
+      {/* Floating AI Message */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6">
+        <div className="mb-auto" />
+        
+        <div className="rounded-2xl bg-white/95 backdrop-blur-sm px-6 py-4 shadow-xl max-w-xs">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+              <span className="text-sm font-bold text-primary-foreground">AI</span>
+            </div>
+            <span className="font-semibold text-foreground">Assistant</span>
+          </div>
+          <p className="text-foreground text-lg">
+            {"Let's start with one area."}
+          </p>
         </div>
 
-        {/* Heading */}
-        <h1 className="mb-4 text-balance text-4xl font-bold tracking-tight text-foreground">
-          {"Let's start with one area"}
-        </h1>
+        <div className="mb-auto" />
+      </div>
 
-        {/* Description */}
-        <p className="mb-12 text-pretty text-lg text-muted-foreground">
-          Pick a space in your home and let AI guide you through the decluttering process, one item at a time.
-        </p>
-
-        {/* CTA Button */}
-        <Button size="lg" onClick={onNext} className="gap-3">
-          <Camera className="h-5 w-5" />
-          Scan your space
+      {/* Bottom Action */}
+      <div className="relative z-10 px-6 pb-12 pt-6">
+        <Button 
+          size="lg" 
+          onClick={onNext} 
+          className="w-full gap-3 h-14 text-lg font-semibold rounded-2xl shadow-lg"
+        >
+          <Scan className="h-6 w-6" />
+          Scan space
         </Button>
-
-        {/* Footer hint */}
-        <p className="mt-8 text-sm text-muted-foreground">
-          Point your camera at a cluttered area to begin
-        </p>
       </div>
     </div>
   );

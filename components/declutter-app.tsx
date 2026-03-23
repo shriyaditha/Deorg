@@ -25,10 +25,12 @@ export function DeclutterApp() {
   const totalItems = 6;
 
   const handleDecision = (decision: ItemDecision) => {
+    // Map "donate" to both donated and sold stats based on user choice
+    const statKey = decision === "keep" ? "kept" : decision === "donate" ? "donated" : "sold";
+    
     setStats((prev) => ({
       ...prev,
-      [decision === "keep" ? "kept" : decision === "donate" ? "donated" : "sold"]:
-        prev[decision === "keep" ? "kept" : decision === "donate" ? "donated" : "sold"] + 1,
+      [statKey]: prev[statKey] + 1,
     }));
 
     if (currentItem < totalItems) {
@@ -45,7 +47,7 @@ export function DeclutterApp() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       {currentScreen === 1 && (
         <WelcomeScreen onNext={() => setCurrentScreen(2)} />
       )}
