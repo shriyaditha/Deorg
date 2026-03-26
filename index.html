@@ -1,24 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AI Declutter Prototype</title>
+  <title>Declutter Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       margin: 0;
       font-family: Arial;
-      background: #000;
+      overflow: hidden;
       color: white;
-      text-align: center;
+    }
+
+    video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: -1;
     }
 
     .screen {
       display: none;
       height: 100vh;
       padding: 20px;
+      text-align: center;
     }
 
     .active {
       display: block;
+    }
+
+    .box {
+      border: 1px solid white;
+      padding: 16px;
+      margin: 20px;
     }
 
     button {
@@ -28,40 +52,57 @@
       border: 1px solid white;
       background: transparent;
       color: white;
-      font-size: 16px;
     }
   </style>
 </head>
 
 <body>
 
+<!-- Background video -->
+<video autoplay muted loop playsinline>
+  <source src="background.mp4" type="video/mp4" />
+</video>
+<div class="overlay"></div>
+
 <!-- Screen 1 -->
 <div id="screen1" class="screen active">
-  <h2>Let’s start with one area</h2>
+  <div class="box">
+    Let’s start with one area
+  </div>
   <button onclick="next(2)">Scan space</button>
 </div>
 
 <!-- Screen 2 -->
 <div id="screen2" class="screen">
-  <h2>Analyzing your space...</h2>
-  <p>Your Decluttering Plan:</p>
-  <p>1. Clear visible clutter</p>
-  <p>2. Group similar items</p>
-  <p>3. Decide what to keep or remove</p>
+  <div class="box">
+    Analyzing your space...
+    <br><br>
+    Plan:
+    <br>1. Clear clutter
+    <br>2. Group items
+    <br>3. Decide what stays
+  </div>
   <button onclick="next(3)">Start Step 1</button>
 </div>
 
 <!-- Screen 3 -->
 <div id="screen3" class="screen">
-  <h2>Do you use this weekly?</h2>
+  <div class="box">
+    Step 1 of 3
+    <br><br>
+    Do you use this weekly?
+  </div>
   <button onclick="next(4)">Keep</button>
   <button onclick="next(4)">Donate / Sell</button>
 </div>
 
 <!-- Screen 4 -->
 <div id="screen4" class="screen">
-  <h2>You decluttered 6 items</h2>
-  <p>3 kept, 2 donated, 1 sold</p>
+  <div class="box">
+    You decluttered 6 items
+    <br>
+    3 kept, 2 donated, 1 sold
+  </div>
   <button onclick="next(1)">Start again</button>
 </div>
 
