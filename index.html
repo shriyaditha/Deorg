@@ -1,898 +1,1092 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Declutter Prototype</title>
-  <style>
-    :root {
-      --bg: #000;
-      --fg: #fff;
-      --line: rgba(255,255,255,0.95);
-      --muted: rgba(255,255,255,0.72);
-      --overlay: rgba(0,0,0,0.42);
-      --radius: 18px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --phone-w: 430px;
-      --phone-h: 932px;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ClearUp.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
 
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      margin: 0;
-      background: #111;
-      color: var(--fg);
-      font-family: var(--font);
-      height: 100%;
-      overflow: hidden;
-    }
+  :root {
+    --black: #000;
+    --white: #fff;
+    --gray: #888;
+    --light: #eee;
+    --border: 1px solid #000;
+    --font: 'Courier Prime', monospace;
+    --size: 15px;
+  }
 
-    body {
-      display: grid;
-      place-items: center;
-    }
+  body {
+    font-family: var(--font);
+    font-size: var(--size);
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 0;
+  }
 
-    .app-shell {
-      position: relative;
-      width: min(100vw, var(--phone-w));
-      height: min(100vh, var(--phone-h));
-      background: #000;
-      overflow: hidden;
-    }
+  #app {
+    width: 100%;
+    max-width: 390px;
+    min-height: 100vh;
+    background: var(--white);
+    border-left: var(--border);
+    border-right: var(--border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
 
-    @media (max-width: 520px) {
-      .app-shell {
-        width: 100vw;
-        height: 100vh;
-      }
-    }
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; }
 
-    video.bg-video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 0;
-      background: #000;
-    }
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 20px 20px 0;
+    gap: 16px;
+  }
+  .header-title {
+    font-size: var(--size);
+    font-weight: 700;
+    flex: 1;
+    text-align: center;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    font-family: var(--font);
+    font-size: var(--size);
+    cursor: pointer;
+    padding: 0;
+    font-weight: 700;
+  }
+  .header-spacer { width: 24px; }
 
-    .video-dim {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(0,0,0,0.52),
-        rgba(0,0,0,0.22) 28%,
-        rgba(0,0,0,0.22) 70%,
-        rgba(0,0,0,0.72)
-      );
-      z-index: 1;
-      pointer-events: none;
-    }
+  /* STEP LABEL */
+  .step-label {
+    font-size: var(--size);
+    font-weight: 700;
+    padding: 20px 20px 4px;
+    text-transform: uppercase;
+  }
+  .step-heading {
+    font-size: 22px;
+    font-weight: 700;
+    padding: 0 20px 6px;
+  }
+  .step-sub {
+    font-size: var(--size);
+    color: var(--gray);
+    padding: 0 20px 20px;
+    line-height: 1.4;
+  }
 
-    .screen {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      display: none;
-      padding: calc(18px + var(--safe-top)) 18px calc(18px + var(--safe-bottom));
-    }
+  /* BUTTON */
+  .btn {
+    background: var(--black);
+    color: var(--white);
+    border: var(--border);
+    font-family: var(--font);
+    font-size: var(--size);
+    font-weight: 700;
+    padding: 18px 24px;
+    cursor: pointer;
+    width: calc(100% - 40px);
+    margin: auto 20px 32px;
+    text-align: center;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-outline {
+    background: var(--white);
+    color: var(--black);
+  }
 
-    .screen.active {
-      display: block;
-    }
+  /* DOTS */
+  .dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
+    margin-top: auto;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border: var(--border);
+    background: var(--white);
+  }
+  .dot.active { background: var(--black); }
 
-    .stack {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
+  /* ─── SCREEN 0: INTRO ─── */
+  #s0 {
+    padding: 0;
+    justify-content: space-between;
+  }
+  .intro-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px 0;
+  }
+  .intro-icon {
+    width: 80px; height: 80px;
+    border: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin-bottom: 32px;
+  }
+  .intro-heading {
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .intro-sub {
+    font-size: var(--size);
+    color: var(--gray);
+    text-align: center;
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 20px;
+    border-top: var(--border);
+  }
+  .step-num {
+    font-weight: 700;
+    font-size: var(--size);
+    min-width: 20px;
+  }
+  .step-info strong { display: block; font-weight: 700; }
+  .step-info span { color: var(--gray); }
+  .intro-steps { width: 100%; border-bottom: var(--border); }
 
-    .grow {
-      flex: 1;
-    }
+  /* ─── SCREEN 1: DEFINE AREAS ─── */
+  .input-row {
+    display: flex;
+    gap: 0;
+    margin: 0 20px 16px;
+    border: var(--border);
+  }
+  .input-row input {
+    flex: 1;
+    border: none;
+    font-family: var(--font);
+    font-size: var(--size);
+    padding: 14px;
+    outline: none;
+    background: var(--white);
+  }
+  .input-row button {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    border-left: var(--border);
+    font-family: var(--font);
+    font-size: 20px;
+    font-weight: 700;
+    padding: 0 18px;
+    cursor: pointer;
+  }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
+  .section-label {
+    font-size: var(--size);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--gray);
+    padding: 0 20px 10px;
+  }
+  .quick-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 20px 20px;
+  }
+  .quick-chip {
+    border: var(--border);
+    padding: 8px 14px;
+    font-family: var(--font);
+    font-size: var(--size);
+    cursor: pointer;
+    background: var(--white);
+  }
+  .quick-chip:hover { background: var(--black); color: var(--white); }
 
-    .chip {
-      border: 1.5px solid var(--line);
-      background: rgba(0,0,0,0.32);
-      color: var(--fg);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      line-height: 1;
-      white-space: nowrap;
-    }
+  .targets-list {
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .target-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: var(--border);
+  }
+  .target-check { font-size: 13px; color: var(--black); }
+  .target-name { flex: 1; font-weight: 700; }
+  .target-actions { display: flex; gap: 10px; }
+  .icon-btn {
+    background: none;
+    border: none;
+    font-family: var(--font);
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--gray);
+  }
 
-    .panel {
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(0,0,0,0.34);
-      padding: 16px;
-      backdrop-filter: blur(2px);
-    }
+  /* warning */
+  .warning-box {
+    margin: 0 20px 16px;
+    border: var(--border);
+    padding: 14px;
+    background: var(--white);
+    display: none;
+  }
+  .warning-box.show { display: block; }
+  .warning-title { font-weight: 700; margin-bottom: 6px; }
+  .warning-msg { color: var(--gray); line-height: 1.4; }
 
-    .panel.strong {
-      background: rgba(0,0,0,0.58);
-    }
+  /* ─── SCREEN 2: ALLOT TIME ─── */
+  .session-picker {
+    display: flex;
+    margin: 0 20px 20px;
+    border: var(--border);
+  }
+  .session-opt {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-family: var(--font);
+    font-size: var(--size);
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--white);
+    border: none;
+    border-right: var(--border);
+  }
+  .session-opt:last-child { border-right: none; }
+  .session-opt.active { background: var(--black); color: var(--white); }
 
-    .panel.centered {
-      text-align: center;
-    }
+  .budget-bar-wrap {
+    margin: 0 20px 20px;
+    border: var(--border);
+  }
+  .budget-bar-inner {
+    height: 6px;
+    background: var(--black);
+    transition: width 0.3s;
+  }
+  .budget-label {
+    padding: 8px 20px;
+    font-size: var(--size);
+    color: var(--gray);
+  }
+  .budget-label span { font-weight: 700; color: var(--black); }
 
-    .eyebrow {
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
+  .time-cards {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .time-card {
+    border: var(--border);
+    padding: 14px;
+  }
+  .time-card-name {
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .time-card-display {
+    font-size: var(--size);
+    margin-bottom: 10px;
+    color: var(--gray);
+  }
+  .time-card-display span { font-weight: 700; color: var(--black); }
+  .presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .preset-btn {
+    border: var(--border);
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: var(--size);
+    cursor: pointer;
+    background: var(--white);
+  }
+  .preset-btn.active { background: var(--black); color: var(--white); }
+  .custom-time-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .custom-time-row input {
+    width: 60px;
+    border: var(--border);
+    font-family: var(--font);
+    font-size: var(--size);
+    padding: 6px 10px;
+    outline: none;
+  }
+  .custom-time-row label { color: var(--gray); }
 
-    h1, h2, h3, p {
-      margin: 0;
-    }
+  /* ─── SCREEN 3: PILES ─── */
+  .piles-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .pile-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: var(--border);
+    cursor: pointer;
+  }
+  .pile-icon { font-size: 20px; min-width: 24px; }
+  .pile-info { flex: 1; }
+  .pile-name { font-weight: 700; }
+  .pile-desc { color: var(--gray); margin-top: 2px; line-height: 1.3; }
+  .pile-warn { font-size: 13px; color: var(--gray); margin-top: 4px; font-style: italic; }
+  .pile-check {
+    width: 20px; height: 20px;
+    border: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .pile-item.selected .pile-check { background: var(--black); color: var(--white); }
+  .pile-item.selected .pile-name { font-weight: 700; }
 
-    .title {
-      font-size: 32px;
-      line-height: 1.08;
-      font-weight: 700;
-    }
+  /* ─── SCREEN 4: CHECKLIST ─── */
+  .checklist-header {
+    padding: 20px 20px 0;
+    border-bottom: var(--border);
+    margin-bottom: 0;
+  }
+  .checklist-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .checklist-meta { color: var(--gray); padding-bottom: 14px; }
 
-    .title.sm {
-      font-size: 24px;
-    }
+  .checklist-items {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: var(--border);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .check-item.done .check-name { text-decoration: line-through; color: var(--gray); }
+  .check-item.done .check-time { color: var(--gray); }
+  .check-box {
+    width: 20px; height: 20px;
+    border: var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .check-item.done .check-box { background: var(--black); color: var(--white); }
+  .check-name { flex: 1; font-weight: 700; }
+  .check-time { color: var(--gray); }
 
-    .body {
-      margin-top: 10px;
-      font-size: 17px;
-      line-height: 1.4;
-      color: var(--fg);
-    }
+  /* strikethrough animation */
+  .strike-line {
+    position: absolute;
+    top: 50%; left: 20px;
+    height: 2px;
+    background: var(--black);
+    width: 0;
+    transition: width 0.5s ease;
+    pointer-events: none;
+  }
+  .check-item.done .strike-line { width: calc(100% - 40px); }
 
-    .subtle {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.35;
-    }
+  /* ─── SCREEN 5: TASK TIMER ─── */
+  #s5 { padding: 0; }
+  .timer-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 24px;
+    border-bottom: var(--border);
+  }
+  .timer-display {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-status { color: var(--gray); margin-bottom: 24px; }
+  .timer-controls { display: flex; gap: 12px; }
+  .timer-btn {
+    border: var(--border);
+    background: var(--white);
+    font-family: var(--font);
+    font-size: var(--size);
+    font-weight: 700;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  .timer-btn.primary { background: var(--black); color: var(--white); }
 
-    .hero-box {
-      margin-top: 22px;
-      width: 100%;
-      border: 2px solid var(--line);
-      background: rgba(0,0,0,0.48);
-      border-radius: 22px;
-      padding: 22px 18px;
-      text-align: center;
-    }
+  .task-detail {
+    padding: 20px;
+    border-bottom: var(--border);
+  }
+  .task-detail-label { color: var(--gray); margin-bottom: 4px; }
+  .task-detail-name { font-size: 18px; font-weight: 700; }
 
-    .focus-label {
-      font-size: 13px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
+  .piles-reminder {
+    padding: 20px;
+  }
+  .piles-reminder-label { color: var(--gray); margin-bottom: 10px; }
+  .pile-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pile-tag {
+    border: var(--border);
+    padding: 6px 12px;
+    font-family: var(--font);
+    font-size: var(--size);
+  }
 
-    .focus-instruction {
-      margin-top: 10px;
-      font-size: 34px;
-      line-height: 1.06;
-      font-weight: 700;
-    }
+  .done-btn-wrap {
+    padding: 0 20px 32px;
+    margin-top: auto;
+  }
 
-    .focus-support {
-      margin-top: 12px;
-      font-size: 15px;
-      color: var(--muted);
-      line-height: 1.35;
-    }
+  /* extend modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--white);
+    width: 100%;
+    max-width: 390px;
+    border-top: var(--border);
+    padding: 24px 20px 40px;
+  }
+  .modal-title { font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+  .modal-sub { color: var(--gray); margin-bottom: 20px; line-height: 1.4; }
+  .extend-opts { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .extend-opt {
+    border: var(--border);
+    padding: 10px 16px;
+    font-family: var(--font);
+    font-size: var(--size);
+    cursor: pointer;
+    background: var(--white);
+  }
+  .extend-opt.selected { background: var(--black); color: var(--white); }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1;
+    padding: 14px;
+    font-family: var(--font);
+    font-size: var(--size);
+    font-weight: 700;
+    cursor: pointer;
+    border: var(--border);
+  }
+  .modal-actions .confirm { background: var(--black); color: var(--white); }
+  .modal-actions .cancel { background: var(--white); }
 
-    .camera-hint {
-      margin-top: 8px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
-    }
+  /* completion screen */
+  #s6 {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .complete-icon { font-size: 48px; margin-bottom: 24px; }
+  .complete-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .complete-sub { color: var(--gray); line-height: 1.5; margin-bottom: 32px; }
+  .complete-stats {
+    width: 100%;
+    border: var(--border);
+    margin-bottom: 32px;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: var(--border);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--gray); }
+  .stat-val { font-weight: 700; }
 
-    button {
-      appearance: none;
-      border: 2px solid var(--line);
-      background: rgba(0,0,0,0.38);
-      color: var(--fg);
-      border-radius: 999px;
-      min-height: 54px;
-      padding: 0 18px;
-      font-size: 18px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: var(--font);
-    }
-
-    button.primary {
-      background: #000;
-      color: #fff;
-      width: 100%;
-    }
-
-    button.secondary {
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      width: 100%;
-    }
-
-    button.ghost {
-      background: transparent;
-      color: #fff;
-      min-height: 44px;
-      font-size: 15px;
-      padding: 0 14px;
-    }
-
-    button.small {
-      min-height: 42px;
-      font-size: 15px;
-      padding: 0 14px;
-      flex: 1;
-    }
-
-    .footer-actions {
-      margin-top: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .record-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: auto;
-    }
-
-    .list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .list-item {
-      border: 1.5px solid var(--line);
-      border-radius: 14px;
-      padding: 12px 14px;
-      background: rgba(0,0,0,0.28);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-    }
-
-    .list-item strong {
-      font-size: 16px;
-      line-height: 1.2;
-    }
-
-    .badge {
-      border: 1.5px solid var(--line);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    .highlight {
-      position: absolute;
-      border: 3px solid #fff;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      z-index: 3;
-      display: none;
-    }
-
-    .highlight.show {
-      display: block;
-    }
-
-    .highlight-tag {
-      position: absolute;
-      top: -14px;
-      right: -10px;
-      min-width: 30px;
-      height: 30px;
-      padding: 0 8px;
-      border: 2px solid #fff;
-      border-radius: 999px;
-      background: #000;
-      display: grid;
-      place-items: center;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .bottom-nav {
-      position: absolute;
-      left: 18px;
-      right: 18px;
-      bottom: calc(56px + var(--safe-bottom));
-      z-index: 4;
-      display: flex;
-      gap: 10px;
-    }
-
-    .plan-drawer {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 6;
-      background: #000;
-      border-top: 2px solid var(--line);
-      border-top-left-radius: 26px;
-      border-top-right-radius: 26px;
-      padding: 14px 16px calc(18px + var(--safe-bottom));
-      transform: translateY(102%);
-      transition: transform 0.28s ease;
-      max-height: 78%;
-      overflow: auto;
-    }
-
-    .plan-drawer.open {
-      transform: translateY(0);
-    }
-
-    .drawer-handle {
-      width: 54px;
-      height: 6px;
-      background: rgba(255,255,255,0.6);
-      border-radius: 999px;
-      margin: 0 auto 14px;
-    }
-
-    .scrim {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.48);
-      z-index: 5;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    .scrim.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .step-row {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      border: 1.5px solid var(--line);
-      border-radius: 16px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      background: rgba(255,255,255,0.03);
-    }
-
-    .step-row.current {
-      background: rgba(255,255,255,0.10);
-    }
-
-    .step-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .step-title {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    .step-meta {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .progress-bar {
-      height: 10px;
-      border: 1.5px solid var(--line);
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.05);
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: #fff;
-      width: 0%;
-    }
-
-    .decision-overlay {
-      position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: calc(126px + var(--safe-bottom));
-      z-index: 4;
-      border: 2px solid var(--line);
-      background: rgba(0,0,0,0.76);
-      border-radius: 22px;
-      padding: 16px;
-      display: none;
-    }
-
-    .decision-overlay.show {
-      display: block;
-    }
-
-    .decision-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .summary-box {
-      border: 1.5px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: rgba(255,255,255,0.04);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .home-center {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      height: 100%;
-      gap: 18px;
-    }
-  </style>
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--white); }
+  ::-webkit-scrollbar-thumb { background: var(--black); }
+</style>
 </head>
 <body>
-  <div class="app-shell">
-    <video class="bg-video" autoplay muted loop playsinline>
-      <source src="background.mp4" type="video/mp4" />
-    </video>
-    <div class="video-dim"></div>
+<div id="app">
 
-    <section class="screen active" id="screen-start">
-      <div class="stack">
-        <div class="topbar">
-          <div class="chip">Declutter Session</div>
-          <div class="chip">Wireframe Prototype</div>
-        </div>
-
-        <div class="home-center">
-          <div class="panel strong centered">
-            <div class="eyebrow">Start</div>
-            <h1 class="title sm">Let’s start with one area.</h1>
-            <p class="body">Show the space and say what you want help with. The plan will be broken into small, manageable steps.</p>
-          </div>
-
-          <div class="panel">
-            <div class="eyebrow">What happens next</div>
-            <p class="body">1. Record the space</p>
-            <p class="body">2. Get a plan</p>
-            <p class="body">3. Follow one step at a time</p>
-          </div>
-        </div>
-
-        <div class="footer-actions">
-          <button class="primary" onclick="goTo('screen-record')">Start Session</button>
+  <!-- SCREEN 0: INTRO -->
+  <div class="screen active" id="s0">
+    <div class="intro-top">
+      <div class="intro-icon">📦</div>
+      <div class="intro-heading">Before we start decluttering...</div>
+      <div class="intro-sub">Let's do 3 simple steps to set you up for a successful, stress-free session.</div>
+    </div>
+    <div class="intro-steps">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <strong>Define Problem Areas</strong>
+          <span>Pick one small space to start.</span>
         </div>
       </div>
-    </section>
-
-    <section class="screen" id="screen-record">
-      <div class="stack">
-        <div class="topbar">
-          <div class="chip">● REC</div>
-          <div class="chip" id="record-time">0:12</div>
-        </div>
-
-        <div class="grow"></div>
-
-        <div class="panel strong">
-          <div class="eyebrow">Recording</div>
-          <h2 class="title sm">Tell me what you want help with while showing the room.</h2>
-          <p class="body">Walk slowly. Show visible clutter and storage areas.</p>
-          <div class="camera-hint">Example: “I want this entry area to feel calmer and easier to maintain.”</div>
-        </div>
-
-        <div class="record-actions">
-          <button class="small secondary" onclick="pauseRecording()">Pause</button>
-          <button class="small primary" onclick="goTo('screen-plan-ready')">Finish Recording</button>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <strong>Allot Time</strong>
+          <span>Set a realistic timer (e.g., 15 mins).</span>
         </div>
       </div>
-    </section>
-
-    <section class="screen" id="screen-plan-ready">
-      <div class="stack">
-        <div class="topbar">
-          <div class="chip">Plan Ready</div>
-          <button class="ghost" onclick="togglePlan(true)">View Full Plan</button>
-        </div>
-
-        <div class="panel strong centered">
-          <div class="eyebrow">Overview</div>
-          <h2 class="title sm">Your decluttering plan</h2>
-          <p class="body">4 total steps • about 25 minutes</p>
-        </div>
-
-        <div class="list">
-          <div class="list-item">
-            <div>
-              <strong>Step 1: Pair like with like</strong>
-              <div class="subtle">6 tasks</div>
-            </div>
-            <div class="badge">Current</div>
-          </div>
-          <div class="list-item">
-            <div>
-              <strong>Step 2: Clear visible surfaces</strong>
-              <div class="subtle">4 tasks</div>
-            </div>
-            <div class="badge">Next</div>
-          </div>
-          <div class="list-item">
-            <div>
-              <strong>Step 3: Decide what stays</strong>
-              <div class="subtle">8 items</div>
-            </div>
-            <div class="badge">Later</div>
-          </div>
-          <div class="list-item">
-            <div>
-              <strong>Step 4: Put things back intentionally</strong>
-              <div class="subtle">3 tasks</div>
-            </div>
-            <div class="badge">Later</div>
-          </div>
-        </div>
-
-        <div class="footer-actions">
-          <button class="primary" onclick="startSession()">Start Step 1</button>
-          <button class="secondary" onclick="togglePlan(true)">View Full Plan</button>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <strong>Define Piles</strong>
+          <span>Keep, Donate, Trash, Repair, Sell.</span>
         </div>
       </div>
-    </section>
-
-    <section class="screen" id="screen-focus">
-      <div class="topbar">
-        <div class="chip" id="macro-progress">Step 1 of 4</div>
-        <button class="ghost" onclick="togglePlan(true)">View Plan</button>
-      </div>
-
-      <div class="highlight show" id="highlight-box" style="left: 90px; top: 360px; width: 112px; height: 132px;">
-        <div class="highlight-tag" id="highlight-number">1</div>
-      </div>
-
-      <div class="hero-box" id="focus-task-box">
-        <div class="focus-label">Do now</div>
-        <div class="focus-instruction" id="focus-instruction">Put all pillows together.</div>
-        <div class="focus-support" id="focus-support">Don’t decide yet. Just group similar things together.</div>
-      </div>
-
-      <div class="decision-overlay" id="decision-overlay">
-        <div class="eyebrow">Decision</div>
-        <h3 class="title sm" style="font-size:28px;">Have you used this recently?</h3>
-        <p class="body">Choose one action and move forward.</p>
-        <div class="decision-actions">
-          <button class="small" onclick="chooseDecision('Keep')">Keep</button>
-          <button class="small" onclick="chooseDecision('Put Away')">Put Away</button>
-          <button class="small" onclick="chooseDecision('Remove')">Remove</button>
-          <button class="small" onclick="closeDecision()">Cancel</button>
-        </div>
-      </div>
-
-      <div class="bottom-nav">
-        <button class="small secondary" onclick="pauseSession()">Pause</button>
-        <button class="small primary" id="next-btn" onclick="nextTask()">Next</button>
-      </div>
-    </section>
-
-    <section class="screen" id="screen-summary">
-      <div class="stack">
-        <div class="topbar">
-          <div class="chip">Session Complete</div>
-          <div class="chip">Focus Mode</div>
-        </div>
-
-        <div class="panel strong centered">
-          <div class="eyebrow">Summary</div>
-          <h2 class="title">You cleared 12 items</h2>
-          <p class="body">Small steps. Clear progress.</p>
-        </div>
-
-        <div class="summary-grid">
-          <div class="summary-box">
-            <strong>Kept</strong>
-            <span id="sum-keep">5</span>
-          </div>
-          <div class="summary-box">
-            <strong>Put Away</strong>
-            <span id="sum-putaway">4</span>
-          </div>
-          <div class="summary-box">
-            <strong>Removed</strong>
-            <span id="sum-remove">3</span>
-          </div>
-        </div>
-
-        <div class="panel" style="margin-top:16px;">
-          <div class="eyebrow">Next suggested step</div>
-          <p class="body">Do a quick 10-minute reset tomorrow to keep this area from filling up again.</p>
-        </div>
-
-        <div class="footer-actions">
-          <button class="primary" onclick="restartPrototype()">Start Another Session</button>
-          <button class="secondary" onclick="togglePlan(true)">View Full Plan</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="scrim" id="scrim" onclick="togglePlan(false)"></div>
-
-    <aside class="plan-drawer" id="plan-drawer">
-      <div class="drawer-handle"></div>
-      <div class="topbar" style="margin-bottom:14px;">
-        <div class="chip">Full Plan</div>
-        <button class="ghost" onclick="togglePlan(false)">Close</button>
-      </div>
-
-      <div class="step-row current" id="plan-step-1">
-        <div class="step-top">
-          <div class="step-title">Step 1: Pair like with like</div>
-          <div class="badge" id="plan-step-1-meta">1 / 6</div>
-        </div>
-        <div class="step-meta">Group similar items first. No decisions yet.</div>
-        <div class="progress-bar"><div class="progress-fill" id="plan-fill-1"></div></div>
-      </div>
-
-      <div class="step-row" id="plan-step-2">
-        <div class="step-top">
-          <div class="step-title">Step 2: Clear visible surfaces</div>
-          <div class="badge" id="plan-step-2-meta">0 / 4</div>
-        </div>
-        <div class="step-meta">Make the space feel lighter and more usable.</div>
-        <div class="progress-bar"><div class="progress-fill" id="plan-fill-2"></div></div>
-      </div>
-
-      <div class="step-row" id="plan-step-3">
-        <div class="step-top">
-          <div class="step-title">Step 3: Decide what stays</div>
-          <div class="badge" id="plan-step-3-meta">0 / 8</div>
-        </div>
-        <div class="step-meta">One object at a time.</div>
-        <div class="progress-bar"><div class="progress-fill" id="plan-fill-3"></div></div>
-      </div>
-
-      <div class="step-row" id="plan-step-4">
-        <div class="step-top">
-          <div class="step-title">Step 4: Put things back intentionally</div>
-          <div class="badge" id="plan-step-4-meta">0 / 3</div>
-        </div>
-        <div class="step-meta">Return only what belongs here.</div>
-        <div class="progress-bar"><div class="progress-fill" id="plan-fill-4"></div></div>
-      </div>
-    </aside>
+    </div>
+    <div style="flex:1"></div>
+    <button class="btn" onclick="goTo('s1')">Get Started →</button>
   </div>
 
-  <script>
-    const steps = [
-      {
-        title: "Pair like with like",
-        tasks: [
-          { instruction: "Put all pillows together.", support: "Don’t decide yet. Just group similar things together.", highlight: { left: 90, top: 360, width: 112, height: 132, num: 1 } },
-          { instruction: "Put all hats together.", support: "Keep moving. Sorting first makes decisions easier later.", highlight: { left: 208, top: 220, width: 96, height: 90, num: 2 } },
-          { instruction: "Put all papers together.", support: "One pile is enough for now.", highlight: { left: 258, top: 460, width: 120, height: 90, num: 3 } },
-          { instruction: "Put all small decor together.", support: "You are only grouping, not organizing perfectly.", highlight: { left: 40, top: 260, width: 90, height: 120, num: 4 } },
-          { instruction: "Put all electronics together.", support: "Collect them into one visible zone.", highlight: { left: 230, top: 550, width: 120, height: 110, num: 5 } },
-          { instruction: "Check the floor and chair for strays.", support: "Finish the group before moving on.", highlight: { left: 120, top: 550, width: 110, height: 145, num: 6 } }
-        ]
-      },
-      {
-        title: "Clear visible surfaces",
-        tasks: [
-          { instruction: "Clear the top surface first.", support: "Focus on the most visible area.", highlight: { left: 178, top: 450, width: 125, height: 86, num: 1 } },
-          { instruction: "Move anything that doesn’t belong away.", support: "Only leave essentials.", highlight: { left: 248, top: 470, width: 122, height: 86, num: 2 } },
-          { instruction: "Wipe the surface mentally — should anything remain?", support: "If not, remove it.", highlight: { left: 168, top: 436, width: 146, height: 108, num: 3 } },
-          { instruction: "Clear one secondary surface.", support: "Small wins make the room feel calmer fast.", highlight: { left: 30, top: 460, width: 132, height: 84, num: 4 } }
-        ]
-      },
-      {
-        title: "Decide what stays",
-        tasks: [
-          { instruction: "Review this item.", support: "Choose one action and move on.", decision: true, highlight: { left: 90, top: 360, width: 112, height: 132, num: 1 } },
-          { instruction: "Review this item.", support: "Keep only what supports the space.", decision: true, highlight: { left: 208, top: 220, width: 96, height: 90, num: 2 } },
-          { instruction: "Review this item.", support: "No overthinking. Pick the best next action.", decision: true, highlight: { left: 258, top: 460, width: 120, height: 90, num: 3 } },
-          { instruction: "Review this item.", support: "If it belongs elsewhere, put it away.", decision: true, highlight: { left: 40, top: 260, width: 90, height: 120, num: 4 } },
-          { instruction: "Review this item.", support: "If it’s no longer useful here, remove it.", decision: true, highlight: { left: 230, top: 550, width: 120, height: 110, num: 5 } },
-          { instruction: "Review this item.", support: "Quick decision. Keep momentum.", decision: true, highlight: { left: 120, top: 550, width: 110, height: 145, num: 6 } },
-          { instruction: "Review this item.", support: "This does not need to be perfect.", decision: true, highlight: { left: 178, top: 450, width: 125, height: 86, num: 7 } },
-          { instruction: "Review this item.", support: "Choose what makes the space easier to maintain.", decision: true, highlight: { left: 30, top: 460, width: 132, height: 84, num: 8 } }
-        ]
-      },
-      {
-        title: "Put things back intentionally",
-        tasks: [
-          { instruction: "Return only the kept items.", support: "Give each item a clear home.", highlight: { left: 178, top: 450, width: 125, height: 86, num: 1 } },
-          { instruction: "Place frequently used items within reach.", support: "Make the space easy to use tomorrow.", highlight: { left: 248, top: 470, width: 122, height: 86, num: 2 } },
-          { instruction: "Leave one visible breathing area.", support: "A little empty space helps the room stay calm.", highlight: { left: 30, top: 460, width: 132, height: 84, num: 3 } }
-        ]
-      }
-    ];
+  <!-- SCREEN 1: DEFINE AREAS -->
+  <div class="screen" id="s1">
+    <div class="header">
+      <button class="back-btn" onclick="goTo('s0')">←</button>
+      <div class="header-title">ClearUp.</div>
+      <div class="header-spacer"></div>
+    </div>
+    <div class="step-label">Step 1 of 3</div>
+    <div class="step-heading">Define Problem Areas</div>
+    <div class="step-sub">List the specific spots you want to tackle. Start small!</div>
 
-    let currentStep = 0;
-    let currentTask = 0;
-    let counts = { Keep: 0, "Put Away": 0, Remove: 0 };
+    <div class="input-row">
+      <input id="areaInput" type="text" placeholder="e.g. Kitchen junk drawer" onkeydown="if(event.key==='Enter')addArea()">
+      <button onclick="addArea()">+</button>
+    </div>
 
-    const screens = document.querySelectorAll(".screen");
-    const planDrawer = document.getElementById("plan-drawer");
-    const scrim = document.getElementById("scrim");
-    const macroProgress = document.getElementById("macro-progress");
-    const focusInstruction = document.getElementById("focus-instruction");
-    const focusSupport = document.getElementById("focus-support");
-    const highlightBox = document.getElementById("highlight-box");
-    const highlightNumber = document.getElementById("highlight-number");
-    const decisionOverlay = document.getElementById("decision-overlay");
-    const nextBtn = document.getElementById("next-btn");
+    <div class="warning-box" id="warningBox">
+      <div class="warning-title">⚠ Be more specific!</div>
+      <div class="warning-msg">Tackling an entire room at once can feel overwhelming and hard to finish in a short session. Pick one small spot — like a drawer, shelf, or corner — so you can actually complete it and feel great about it.</div>
+    </div>
 
-    function goTo(id) {
-      screens.forEach(s => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-    }
+    <div class="section-label">Quick Add</div>
+    <div class="quick-add">
+      <button class="quick-chip" onclick="quickAdd('Kitchen Counter')">+ Kitchen Counter</button>
+      <button class="quick-chip" onclick="quickAdd('Office Desk')">+ Office Desk</button>
+      <button class="quick-chip" onclick="quickAdd('Hallway Closet Shelf')">+ Hallway Closet Shelf</button>
+      <button class="quick-chip" onclick="quickAdd('Nightstand Drawer')">+ Nightstand Drawer</button>
+      <button class="quick-chip" onclick="quickAdd('Bathroom Cabinet')">+ Bathroom Cabinet</button>
+      <button class="quick-chip" onclick="quickAdd('Bedroom Chair Pile')">+ Bedroom Chair Pile</button>
+    </div>
 
-    function togglePlan(open) {
-      planDrawer.classList.toggle("open", open);
-      scrim.classList.toggle("show", open);
-    }
+    <div class="section-label">Your Targets</div>
+    <div class="targets-list" id="targetsList"></div>
 
-    function pauseRecording() {
-      alert("Prototype only: recording paused.");
-    }
+    <div class="dots">
+      <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <button class="btn" onclick="nextToStep2()">Next Step →</button>
+  </div>
 
-    function pauseSession() {
-      alert("Prototype only: session paused.");
-    }
+  <!-- SCREEN 2: ALLOT TIME -->
+  <div class="screen" id="s2">
+    <div class="header">
+      <button class="back-btn" onclick="goTo('s1')">←</button>
+      <div class="header-title">ClearUp.</div>
+      <div class="header-spacer"></div>
+    </div>
+    <div class="step-label">Step 2 of 3</div>
+    <div class="step-heading">Allot Time</div>
+    <div class="step-sub">Set realistic durations for your target areas. Consistency beats intensity.</div>
 
-    function startSession() {
-      currentStep = 0;
-      currentTask = 0;
-      counts = { Keep: 0, "Put Away": 0, Remove: 0 };
-      updateFocusScreen();
-      goTo("screen-focus");
-    }
+    <div class="section-label" style="padding-bottom:6px">Session Length</div>
+    <div class="session-picker">
+      <button class="session-opt active" id="opt60" onclick="setSession(60)">1 Hour</button>
+      <button class="session-opt" id="opt120" onclick="setSession(120)">2 Hours</button>
+    </div>
 
-    function updateFocusScreen() {
-      const step = steps[currentStep];
-      const task = step.tasks[currentTask];
+    <div class="budget-bar-wrap">
+      <div style="padding:10px 14px 4px; display:flex; justify-content:space-between;">
+        <span class="budget-label" style="padding:0"><span id="usedMin">0</span> min used</span>
+        <span class="budget-label" style="padding:0"><span id="leftMin">60</span> min left</span>
+      </div>
+      <div style="margin:0 14px 10px; border:var(--border); background:var(--light);">
+        <div class="budget-bar-inner" id="budgetBar" style="width:0%"></div>
+      </div>
+    </div>
 
-      macroProgress.textContent = `Step ${currentStep + 1} of ${steps.length}`;
-      focusInstruction.textContent = task.instruction;
-      focusSupport.textContent = task.support;
+    <div class="time-cards" id="timeCards"></div>
 
-      if (task.highlight) {
-        highlightBox.classList.add("show");
-        highlightBox.style.left = task.highlight.left + "px";
-        highlightBox.style.top = task.highlight.top + "px";
-        highlightBox.style.width = task.highlight.width + "px";
-        highlightBox.style.height = task.highlight.height + "px";
-        highlightNumber.textContent = task.highlight.num;
+    <div class="dots">
+      <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+    </div>
+    <button class="btn" onclick="nextToStep3()">Next Step →</button>
+  </div>
+
+  <!-- SCREEN 3: PILES -->
+  <div class="screen" id="s3">
+    <div class="header">
+      <button class="back-btn" onclick="goTo('s2')">←</button>
+      <div class="header-title">ClearUp.</div>
+      <div class="header-spacer"></div>
+    </div>
+    <div class="step-label">Step 3 of 3</div>
+    <div class="step-heading">Define Piles</div>
+    <div class="step-sub">Select the sorting categories you want to use for your decluttering session.</div>
+
+    <div class="piles-list" id="pilesList"></div>
+
+    <div class="dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot active"></div>
+    </div>
+    <button class="btn" onclick="buildChecklist()">Start Decluttering →</button>
+  </div>
+
+  <!-- SCREEN 4: CHECKLIST -->
+  <div class="screen" id="s4">
+    <div class="checklist-header">
+      <div class="checklist-title">Your Plan.</div>
+      <div class="checklist-meta" id="checklistMeta"></div>
+    </div>
+    <div class="checklist-items" id="checklistItems"></div>
+    <div style="padding:16px 20px 32px; border-top:var(--border); margin-top:auto">
+      <button class="btn btn-outline" style="margin:0;width:100%" onclick="resetAll()">Start New Session</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 5: TASK TIMER -->
+  <div class="screen" id="s5">
+    <div class="header">
+      <button class="back-btn" onclick="goTo('s4')">←</button>
+      <div class="header-title">ClearUp.</div>
+      <div class="header-spacer"></div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <div class="timer-status" id="timerStatus">Ready to start</div>
+      <div class="timer-controls">
+        <button class="timer-btn primary" id="startStopBtn" onclick="toggleTimer()">Start</button>
+        <button class="timer-btn" onclick="showExtendModal()">Extend +</button>
+      </div>
+    </div>
+    <div class="task-detail">
+      <div class="task-detail-label">Current task</div>
+      <div class="task-detail-name" id="taskDetailName"></div>
+    </div>
+    <div class="piles-reminder">
+      <div class="piles-reminder-label">Your piles for this session</div>
+      <div class="pile-tags" id="pileTagsDisplay"></div>
+    </div>
+    <div class="done-btn-wrap">
+      <button class="btn" style="margin:0;width:100%" onclick="completeTask()">Done with Session ✓</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 6: COMPLETE -->
+  <div class="screen" id="s6">
+    <div class="complete-icon">✓</div>
+    <div class="complete-title">Session Complete!</div>
+    <div class="complete-sub">You did it. Every small step adds up. Your space thanks you.</div>
+    <div class="complete-stats" id="completeStats"></div>
+    <button class="btn" style="margin:0;width:100%" onclick="goTo('s4')">Back to Plan</button>
+    <div style="height:16px"></div>
+    <button class="btn btn-outline" style="margin:0;width:100%;border:var(--border)" onclick="resetAll()">Start New Session</button>
+  </div>
+
+</div>
+
+<!-- EXTEND MODAL -->
+<div class="modal-overlay" id="extendModal">
+  <div class="modal">
+    <div class="modal-title">Extend Time</div>
+    <div class="modal-sub" id="extendWarning"></div>
+    <div class="extend-opts" id="extendOpts">
+      <button class="extend-opt" onclick="selectExtend(5)">+5 min</button>
+      <button class="extend-opt" onclick="selectExtend(10)">+10 min</button>
+      <button class="extend-opt" onclick="selectExtend(15)">+15 min</button>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel" onclick="hideExtendModal()">Cancel</button>
+      <button class="confirm" onclick="confirmExtend()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───
+let areas = [];
+let sessionMin = 60;
+let timings = {}; // area name -> minutes
+let selectedPiles = new Set(['Keep']);
+let currentTask = null;
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+let extendAmount = 0;
+let completedTasks = new Set();
+
+const BROAD_TERMS = ['kitchen','bathroom','bedroom','living room','dining room','garage','basement','attic','office','hallway','laundry','closet','pantry','yard','garden','porch','deck','study','lounge'];
+
+const PILES = [
+  { id:'Keep', icon:'📦', name:'Keep', desc:'Items to store or display', warn: null },
+  { id:'Donate', icon:'🤝', name:'Donate', desc:'Give to charity or friends', warn: null },
+  { id:'Trash', icon:'🗑', name:'Trash / Recycle', desc:'Broken or unusable items', warn: null },
+  { id:'Relocate', icon:'↗', name:'Relocate', desc:'Belongs in another room', warn: null },
+  { id:'Repair', icon:'🔧', name:'Repair', desc:'Needs fixing before it\'s useful', warn: 'Only if you have a plan and a place for it — give it a specific home so it doesn\'t just create a new pile.' },
+  { id:'Sell', icon:'$', name:'Sell', desc:'Worth money to someone else', warn: 'Be honest: do you know where, when, and how you\'ll sell it? If not, donating is usually a better choice.' },
+  { id:'Unsure', icon:'?', name:'Unsure', desc:'Decide later — set a deadline', warn: null },
+];
+
+// ─── NAVIGATION ───
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ─── STEP 1 ───
+function isBroad(text) {
+  const lower = text.trim().toLowerCase();
+  return BROAD_TERMS.some(t => lower === t || lower === t + 's');
+}
+
+function addArea() {
+  const input = document.getElementById('areaInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const warn = document.getElementById('warningBox');
+  if (isBroad(val)) {
+    warn.classList.add('show');
+    return;
+  }
+  warn.classList.remove('show');
+  if (!areas.includes(val)) {
+    areas.push(val);
+    timings[val] = 0;
+  }
+  input.value = '';
+  renderTargets();
+}
+
+function quickAdd(name) {
+  if (!areas.includes(name)) {
+    areas.push(name);
+    timings[name] = 0;
+  }
+  renderTargets();
+}
+
+function removeArea(i) {
+  delete timings[areas[i]];
+  areas.splice(i, 1);
+  renderTargets();
+}
+
+function renderTargets() {
+  const el = document.getElementById('targetsList');
+  el.innerHTML = areas.map((a,i) => `
+    <div class="target-item">
+      <div class="target-check">✓</div>
+      <div class="target-name">${a}</div>
+      <div class="target-actions">
+        <button class="icon-btn" onclick="removeArea(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function nextToStep2() {
+  if (areas.length === 0) { alert('Add at least one area first!'); return; }
+  renderTimeCards();
+  goTo('s2');
+}
+
+// ─── STEP 2 ───
+function setSession(min) {
+  sessionMin = min;
+  document.getElementById('opt60').classList.toggle('active', min===60);
+  document.getElementById('opt120').classList.toggle('active', min===120);
+  updateBudget();
+}
+
+function setTime(area, min) {
+  timings[area] = min;
+  updateBudget();
+  renderTimeCards();
+}
+
+function updateBudget() {
+  const used = Object.values(timings).reduce((a,b) => a+b, 0);
+  const left = sessionMin - used;
+  document.getElementById('usedMin').textContent = used;
+  document.getElementById('leftMin').textContent = Math.max(0, left);
+  const pct = Math.min(100, (used / sessionMin) * 100);
+  document.getElementById('budgetBar').style.width = pct + '%';
+}
+
+function renderTimeCards() {
+  const el = document.getElementById('timeCards');
+  const presets = [15,20,25,30];
+  el.innerHTML = areas.map(a => {
+    const cur = timings[a] || 0;
+    const presetsHtml = presets.map(p => `
+      <button class="preset-btn ${cur===p?'active':''}" onclick="setTime('${a}',${p})">${p}m</button>
+    `).join('');
+    return `
+      <div class="time-card">
+        <div class="time-card-name">${a}</div>
+        <div class="time-card-display">Allotted: <span>${cur > 0 ? cur + ' min' : 'not set'}</span></div>
+        <div class="presets">${presetsHtml}</div>
+        <div class="custom-time-row">
+          <input type="number" min="1" max="30" placeholder="min" value="${cur||''}"
+            onchange="setTime('${a}', Math.min(30,Math.max(1,parseInt(this.value)||0)))">
+          <label>custom (max 30)</label>
+        </div>
+      </div>
+    `;
+  }).join('');
+  updateBudget();
+}
+
+function nextToStep3() {
+  const unset = areas.filter(a => !timings[a] || timings[a] === 0);
+  if (unset.length > 0) { alert('Please set a time for all areas!'); return; }
+  const used = Object.values(timings).reduce((a,b) => a+b, 0);
+  if (used > sessionMin) { alert(`You've exceeded your ${sessionMin}-minute budget! Remove time from some areas.`); return; }
+  renderPiles();
+  goTo('s3');
+}
+
+// ─── STEP 3 ───
+function renderPiles() {
+  const el = document.getElementById('pilesList');
+  el.innerHTML = PILES.map(p => `
+    <div class="pile-item ${selectedPiles.has(p.id)?'selected':''}" onclick="togglePile('${p.id}')">
+      <div class="pile-icon">${p.icon}</div>
+      <div class="pile-info">
+        <div class="pile-name">${p.name}</div>
+        <div class="pile-desc">${p.desc}</div>
+        ${p.warn ? `<div class="pile-warn">⚠ ${p.warn}</div>` : ''}
+      </div>
+      <div class="pile-check">${selectedPiles.has(p.id)?'✓':''}</div>
+    </div>
+  `).join('');
+}
+
+function togglePile(id) {
+  if (selectedPiles.has(id)) selectedPiles.delete(id);
+  else selectedPiles.add(id);
+  renderPiles();
+}
+
+// ─── CHECKLIST ───
+function buildChecklist() {
+  if (selectedPiles.size === 0) { alert('Select at least one pile!'); return; }
+  completedTasks = new Set();
+  renderChecklist();
+  goTo('s4');
+}
+
+function renderChecklist() {
+  const used = Object.values(timings).reduce((a,b) => a+b, 0);
+  document.getElementById('checklistMeta').textContent =
+    `${areas.length} areas · ${used} min · ${sessionMin} min session`;
+
+  const el = document.getElementById('checklistItems');
+  el.innerHTML = areas.map((a,i) => {
+    const done = completedTasks.has(a);
+    return `
+      <div class="check-item ${done?'done':''}" id="ci-${i}" onclick="openTask('${a}')">
+        <div class="check-box">${done?'✓':''}</div>
+        <div class="check-name">${a}</div>
+        <div class="check-time">${timings[a]} min</div>
+        <div class="strike-line"></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── TASK TIMER ───
+function openTask(area) {
+  if (completedTasks.has(area)) return;
+  currentTask = area;
+  timerSeconds = (timings[area] || 0) * 60;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  document.getElementById('timerStatus').textContent = 'Ready to start';
+  document.getElementById('startStopBtn').textContent = 'Start';
+  document.getElementById('taskDetailName').textContent = area;
+
+  const tags = document.getElementById('pileTagsDisplay');
+  tags.innerHTML = [...selectedPiles].map(p => {
+    const pile = PILES.find(x => x.id === p);
+    return `<div class="pile-tag">${pile ? pile.icon + ' ' + pile.name : p}</div>`;
+  }).join('');
+
+  goTo('s5');
+}
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('startStopBtn').textContent = 'Resume';
+    document.getElementById('timerStatus').textContent = 'Paused';
+  } else {
+    timerRunning = true;
+    document.getElementById('startStopBtn').textContent = 'Pause';
+    document.getElementById('timerStatus').textContent = 'Running...';
+    timerInterval = setInterval(() => {
+      if (timerSeconds > 0) {
+        timerSeconds--;
+        updateTimerDisplay();
       } else {
-        highlightBox.classList.remove("show");
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timerStatus').textContent = 'Time\'s up!';
+        document.getElementById('startStopBtn').textContent = 'Start';
       }
+    }, 1000);
+  }
+}
 
-      nextBtn.textContent = task.decision ? "Open Decision" : "Next";
-      decisionOverlay.classList.remove("show");
-      updatePlanDrawer();
-    }
+function updateTimerDisplay() {
+  const m = Math.floor(timerSeconds / 60).toString().padStart(2,'0');
+  const s = (timerSeconds % 60).toString().padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+}
 
-    function updatePlanDrawer() {
-      const fills = [
-        document.getElementById("plan-fill-1"),
-        document.getElementById("plan-fill-2"),
-        document.getElementById("plan-fill-3"),
-        document.getElementById("plan-fill-4")
-      ];
+// ─── EXTEND ───
+let extendSelected = 0;
+function showExtendModal() {
+  extendSelected = 0;
+  document.querySelectorAll('.extend-opt').forEach(b => b.classList.remove('selected'));
+  const used = Object.values(timings).reduce((a,b)=>a+b,0);
+  const left = sessionMin - used;
+  document.getElementById('extendWarning').textContent =
+    left > 0
+      ? `You have ${left} min remaining in your session. Extending will borrow from your buffer.`
+      : `You have no time left in your session. Extending will go over your ${sessionMin}-minute goal.`;
+  document.getElementById('extendModal').classList.add('show');
+}
+function hideExtendModal() {
+  document.getElementById('extendModal').classList.remove('show');
+}
+function selectExtend(min) {
+  extendSelected = min;
+  document.querySelectorAll('.extend-opt').forEach(b => {
+    b.classList.toggle('selected', b.textContent === `+${min} min`);
+  });
+}
+function confirmExtend() {
+  if (!extendSelected) { alert('Pick an amount to extend.'); return; }
+  timings[currentTask] = (timings[currentTask] || 0) + extendSelected;
+  timerSeconds += extendSelected * 60;
+  updateTimerDisplay();
+  hideExtendModal();
+}
 
-      steps.forEach((step, index) => {
-        const row = document.getElementById(`plan-step-${index + 1}`);
-        row.classList.toggle("current", index === currentStep);
+// ─── COMPLETE TASK ───
+function completeTask() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  completedTasks.add(currentTask);
 
-        let completed = 0;
-        if (index < currentStep) completed = step.tasks.length;
-        if (index === currentStep) completed = currentTask + 1;
+  // show completion
+  const done = completedTasks.size;
+  const total = areas.length;
+  const totalTime = [...completedTasks].reduce((a,t)=>a+(timings[t]||0),0);
+  const stats = document.getElementById('completeStats');
+  stats.innerHTML = `
+    <div class="stat-row"><span class="stat-label">Area completed</span><span class="stat-val">${currentTask}</span></div>
+    <div class="stat-row"><span class="stat-label">Tasks done</span><span class="stat-val">${done} of ${total}</span></div>
+    <div class="stat-row"><span class="stat-label">Time invested</span><span class="stat-val">${totalTime} min</span></div>
+    <div class="stat-row"><span class="stat-label">Piles used</span><span class="stat-val">${[...selectedPiles].join(', ')}</span></div>
+  `;
+  goTo('s6');
 
-        const pct = (completed / step.tasks.length) * 100;
-        fills[index].style.width = pct + "%";
+  // animate strikethrough back on checklist
+  setTimeout(() => { renderChecklist(); }, 100);
+}
 
-        const badge = document.getElementById(`plan-step-${index + 1}-meta`);
-        badge.textContent = `${Math.min(completed, step.tasks.length)} / ${step.tasks.length}`;
-      });
-    }
+// ─── RESET ───
+function resetAll() {
+  areas = [];
+  timings = {};
+  sessionMin = 60;
+  selectedPiles = new Set(['Keep']);
+  completedTasks = new Set();
+  currentTask = null;
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSeconds = 0;
+  document.getElementById('areaInput').value = '';
+  document.getElementById('targetsList').innerHTML = '';
+  document.getElementById('warningBox').classList.remove('show');
+  renderPiles();
+  goTo('s0');
+}
 
-    function nextTask() {
-      const task = steps[currentStep].tasks[currentTask];
-      if (task.decision) {
-        openDecision();
-        return;
-      }
-      advanceFlow();
-    }
-
-    function openDecision() {
-      decisionOverlay.classList.add("show");
-    }
-
-    function closeDecision() {
-      decisionOverlay.classList.remove("show");
-    }
-
-    function chooseDecision(type) {
-      counts[type] += 1;
-      decisionOverlay.classList.remove("show");
-      advanceFlow();
-    }
-
-    function advanceFlow() {
-      const step = steps[currentStep];
-
-      if (currentTask < step.tasks.length - 1) {
-        currentTask += 1;
-        updateFocusScreen();
-        return;
-      }
-
-      if (currentStep < steps.length - 1) {
-        currentStep += 1;
-        currentTask = 0;
-        updateFocusScreen();
-        return;
-      }
-
-      finishSession();
-    }
-
-    function finishSession() {
-      const total = counts.Keep + counts["Put Away"] + counts.Remove || 12;
-      document.getElementById("sum-keep").textContent = counts.Keep || 5;
-      document.getElementById("sum-putaway").textContent = counts["Put Away"] || 4;
-      document.getElementById("sum-remove").textContent = counts.Remove || 3;
-      document.querySelector("#screen-summary .title").textContent = `You cleared ${total} items`;
-      goTo("screen-summary");
-    }
-
-    function restartPrototype() {
-      togglePlan(false);
-      goTo("screen-start");
-    }
-
-    updatePlanDrawer();
-  </script>
+// init
+renderPiles();
+</script>
 </body>
 </html>
